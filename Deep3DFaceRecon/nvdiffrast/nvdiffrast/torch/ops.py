@@ -105,7 +105,7 @@ def _get_plugin(gl=False):
         os.environ['VSCMD_SKIP_SENDTELEMETRY'] = '1'
 
         # Opportunistically patch distutils to cache MSVC environments.
-        try:
+        try: 
             import distutils._msvccompiler
             import functools
             if not hasattr(distutils._msvccompiler._get_vc_env, '__wrapped__'):
@@ -115,8 +115,8 @@ def _get_plugin(gl=False):
 
     # Compile and load.
     source_paths = [os.path.join(os.path.dirname(__file__), fn) for fn in source_files]
-    torch.utils.cpp_extension.load(name=plugin_name, sources=source_paths, extra_cflags=opts, extra_cuda_cflags=opts+['-lineinfo'], extra_ldflags=ldflags, with_cuda=True, verbose=False)
-
+    torch.utils.cpp_extension.load(name=plugin_name, sources=source_paths, extra_cflags=opts, extra_cuda_cflags=opts+['-lineinfo'], extra_ldflags=ldflags, with_cuda=True, verbose=True)
+     
     # Import, cache, and return the compiled module.
     _cached_plugin[gl] = importlib.import_module(plugin_name)
     return _cached_plugin[gl]

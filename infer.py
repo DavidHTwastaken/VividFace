@@ -575,7 +575,7 @@ if __name__ == "__main__":
 
     task_id = datetime.now().strftime("%Y_%m_%d_%H_%M")
     save_file = f'outputs/{task_id}'
-    vae_path = 'weights/face3dvae2'
+    vae_path = 'weights/face3dvae'
     set_strength = 0.8
     enable_3dmm_cfg = False
     remove_id_tex = True
