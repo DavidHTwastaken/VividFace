@@ -561,7 +561,8 @@ def make_image_grid(images: List[Image.Image], rows: int, cols: int, resize: int
     return grid
 
 
-if __name__ == "__main__":
+
+def run(video_path_list, crop_face_path_list, output=None):
     device = "cuda"
     dtype = torch.float16
 
@@ -569,12 +570,14 @@ if __name__ == "__main__":
     face3d_opt.isTrain = False
     face3d_opt.use_opengl = False
     face3d_opt.use_ddp = False
-    face3d_opt.bfm_folder = os.path.join(os.path.dirname(__file__), './Deep3DFaceRecon/BFM')
-    face3d_opt.load_path = os.path.join(os.path.dirname(__file__),'./Deep3DFaceRecon/BFM/checkpoints/base/epoch_20.pth')
+    face3d_opt.bfm_folder = os.path.join(
+        os.path.dirname(__file__), './Deep3DFaceRecon/BFM')
+    face3d_opt.load_path = os.path.join(os.path.dirname(
+        __file__), './Deep3DFaceRecon/BFM/checkpoints/base/epoch_20.pth')
     face3dmodel = Face3DModel(face3d_opt, device='cuda:0')
 
     task_id = datetime.now().strftime("%Y_%m_%d_%H_%M")
-    save_file = f'outputs/{task_id}'
+    save_file = f'outputs/{task_id if output is None else output}'
     vae_path = 'weights/face3dvae'
     set_strength = 0.8
     enable_3dmm_cfg = False
@@ -582,25 +585,21 @@ if __name__ == "__main__":
 
     unet_path = 'weights/checkpoints'
 
-    infer_data_root = sys.argv[1]
-
-    video_path_list = [os.path.join(infer_data_root, 'videos', x) for x in os.listdir(os.path.join(infer_data_root, 'videos')) if x.endswith('mp4')]
-    crop_face_path_list = [os.path.join(infer_data_root, 'faces', x) for x in os.listdir(os.path.join(infer_data_root, 'faces'))]
-
-
     pipe = "weights/stable-diffusion-v1-5"
 
     print(f'Using CKPT : {unet_path}')
     face_embedder = FaceEmbedder(
-        arcface_path = "weights/IResNet100_WebFace42M.pth",
-        dino_model_path = "weights/dinov2-base"
+        arcface_path="weights/IResNet100_WebFace42M.pth",
+        dino_model_path="weights/dinov2-base"
     ).to(device)
 
     face_embedder.eval()
     face_embedder.requires_grad_(False)
 
-    unet = UNetMotionModel.from_pretrained(os.path.join(unet_path, 'denoising_unet')).to(dtype)
-    refnet: OriginalUNet2DConditionModel = OriginalUNet2DConditionModel.from_pretrained(os.path.join(unet_path, 'reference_unet'))
+    unet = UNetMotionModel.from_pretrained(
+        os.path.join(unet_path, 'denoising_unet')).to(dtype)
+    refnet: OriginalUNet2DConditionModel = OriginalUNet2DConditionModel.from_pretrained(
+        os.path.join(unet_path, 'reference_unet'))
     refnet = refnet.to(dtype)
     refnet = refnet.cuda()
     pipe = StableDiffusionGLIGENInpaintPipeline.from_pretrained(
@@ -611,7 +610,8 @@ if __name__ == "__main__":
         torch_dtype=dtype
     ).to('cuda')
     pipe.scheduler = DDIMScheduler.from_config(pipe.scheduler.config)
-    pipe.vae = AutoencoderKLTemporalEncoderDecoder.from_pretrained(vae_path).cuda()
+    pipe.vae = AutoencoderKLTemporalEncoderDecoder.from_pretrained(
+        vae_path).cuda()
     pipe.vae = pipe.vae.to(dtype)
     pipe.refnet = refnet
     pipe.set_progress_bar_config(ncols=50)
@@ -630,7 +630,6 @@ if __name__ == "__main__":
         T.ToTensor(),
     ])
 
-
     path_id = unet_path.split('/')[-2]
     this_path_save_path = f'{save_file}_{path_id}'
     os.mkdir(this_path_save_path)
@@ -643,7 +642,8 @@ if __name__ == "__main__":
     os.environ['new_pred_frames'] = str(num_frames)
     use_init_noise = 'n'
     use_init_noise = use_init_noise == 'y'
-    init_noise = randn_tensor((num_frames, 4, 64, 64), generator=None, device=device, dtype=dtype)
+    init_noise = randn_tensor((num_frames, 4, 64, 64),
+                              generator=None, device=device, dtype=dtype)
 
     dino_sets = [0.6]
     attr_sets = [0.6]
@@ -652,10 +652,13 @@ if __name__ == "__main__":
         for attrid, set_attr_scale in enumerate(attr_sets):
             for video_path, face_path in zip(video_path_list, crop_face_path_list):
                 try:
-                    short_video_path = os.path.splitext(os.path.basename(video_path))[0]
-                    short_face_path = os.path.splitext(os.path.basename(face_path))[0]
+                    short_video_path = os.path.splitext(
+                        os.path.basename(video_path))[0]
+                    short_face_path = os.path.splitext(
+                        os.path.basename(face_path))[0]
 
-                    print(f'Using DINO {set_dino_scale}, ATTR {set_attr_scale}, Video {short_video_path}, Face {short_face_path}')
+                    print(
+                        f'Using DINO {set_dino_scale}, ATTR {set_attr_scale}, Video {short_video_path}, Face {short_face_path}')
                     scales_video_saved_path = f'{video_saved_path}/{short_video_path}_{short_face_path}.mp4'
                     frames_path = f'{frames_saved_root_path}/{short_video_path}_{short_face_path}'
                     os.mkdir(frames_path)
@@ -668,18 +671,23 @@ if __name__ == "__main__":
 
                     face_pixel_values = []
                     crop_face = Image.open(face_path)
-                    crop_face = crop_face.resize((224, 224), resample=Image.Resampling.LANCZOS)
-                    face_pixel_values.append(torch.stack([face_transform(crop_face), ], dim=0))
+                    crop_face = crop_face.resize(
+                        (224, 224), resample=Image.Resampling.LANCZOS)
+                    face_pixel_values.append(torch.stack(
+                        [face_transform(crop_face), ], dim=0))
                     face_pixel_values = torch.stack(face_pixel_values, dim=0)
-                    face_pixel_values = face_pixel_values.repeat_interleave(num_frames, dim=1)
-                    face_pixel_values = face_pixel_values.reshape(-1, *face_pixel_values.shape[-3:])
+                    face_pixel_values = face_pixel_values.repeat_interleave(
+                        num_frames, dim=1)
+                    face_pixel_values = face_pixel_values.reshape(
+                        -1, *face_pixel_values.shape[-3:])
                     face_pixel_values = face_pixel_values.cuda()
                     prev_frames = deque([], maxlen=4)
                     for _ in range(4):
-                        prev_frames.append(Image.new("RGB", (512, 512), (127, 127, 127)))
+                        prev_frames.append(
+                            Image.new("RGB", (512, 512), (127, 127, 127)))
 
                     for video_start in range(0, video_length, num_frames):
-                        
+
                         pixel_values = []
                         pixel_values_3dmm = []
                         cond_pixel_values = []
@@ -687,8 +695,10 @@ if __name__ == "__main__":
                         mask_values = []
                         mask_values_3dmm = []
                         try:
-                            indices = list(range(video_start, video_start+num_frames))
-                            frames = video_reader.get_batch(indices).asnumpy() # sample_frames+1, h, w, 3
+                            indices = list(
+                                range(video_start, video_start+num_frames))
+                            frames = video_reader.get_batch(
+                                indices).asnumpy()  # sample_frames+1, h, w, 3
                         except:
                             break
 
@@ -700,7 +710,8 @@ if __name__ == "__main__":
 
                         for iidx, (i, frame) in enumerate(zip(indices, frames)):
                             pixel_value.append(transform(frame))
-                            s_pixel_value_3dmm, s_mask_3dmm = face3dmodel.process_video_for_training(pixel_value[-1].unsqueeze(0), anno[i][4:14].reshape(1, 5, 2), remove_id_tex=remove_id_tex)
+                            s_pixel_value_3dmm, s_mask_3dmm = face3dmodel.process_video_for_training(
+                                pixel_value[-1].unsqueeze(0), anno[i][4:14].reshape(1, 5, 2), remove_id_tex=remove_id_tex)
                             pixel_value_3dmm.append(s_pixel_value_3dmm)
                             mask_value_3dmm.append(s_mask_3dmm)
 
@@ -709,7 +720,8 @@ if __name__ == "__main__":
                             crop_face = extract_face(frame, bbox)
 
                             attr_pixel_value.append(attr_transform(crop_face))
-                            mask = torch.zeros((1, 512, 512), dtype=torch.float32)
+                            mask = torch.zeros(
+                                (1, 512, 512), dtype=torch.float32)
                             x1, y1, x2, y2 = anno[i][:4]
                             enlarge = 0.05
                             l = max(y2-y1, x2-x1)
@@ -722,51 +734,63 @@ if __name__ == "__main__":
                             mask[:, y1:y2, x1:x2] = 1
                             mask_value.append(mask)
                         pixel_values.append(torch.stack(pixel_value, dim=0))
-                        pixel_values_3dmm.append(torch.stack(pixel_value_3dmm, dim=0))
-                        attr_pixel_values.append(torch.stack(attr_pixel_value, dim=0))
+                        pixel_values_3dmm.append(
+                            torch.stack(pixel_value_3dmm, dim=0))
+                        attr_pixel_values.append(
+                            torch.stack(attr_pixel_value, dim=0))
                         mask_values.append(torch.stack(mask_value, dim=0))
-                        mask_values_3dmm.append(torch.stack(mask_value_3dmm, dim=0))
+                        mask_values_3dmm.append(
+                            torch.stack(mask_value_3dmm, dim=0))
 
                         pixel_values = torch.stack(pixel_values, dim=0)
-                        pixel_values_3dmm = torch.stack(pixel_values_3dmm, dim=0)
-                        attr_pixel_values = torch.stack(attr_pixel_values, dim=0)
+                        pixel_values_3dmm = torch.stack(
+                            pixel_values_3dmm, dim=0)
+                        attr_pixel_values = torch.stack(
+                            attr_pixel_values, dim=0)
                         mask_values = torch.stack(mask_values, dim=0)
                         mask_values_3dmm = torch.stack(mask_values_3dmm, dim=0)
 
-                        pixel_values = pixel_values.reshape(-1, *pixel_values.shape[-3:])
-                        pixel_values_3dmm = pixel_values_3dmm.reshape(-1, *pixel_values.shape[-3:])
-                        attr_pixel_values = attr_pixel_values.reshape(-1, *attr_pixel_values.shape[-3:])
+                        pixel_values = pixel_values.reshape(
+                            -1, *pixel_values.shape[-3:])
+                        pixel_values_3dmm = pixel_values_3dmm.reshape(
+                            -1, *pixel_values.shape[-3:])
+                        attr_pixel_values = attr_pixel_values.reshape(
+                            -1, *attr_pixel_values.shape[-3:])
 
-                        mask_values = mask_values.reshape(-1, *mask_values.shape[-3:])
-                        mask_values_3dmm = mask_values_3dmm.reshape(-1, *mask_values.shape[-3:])
+                        mask_values = mask_values.reshape(
+                            -1, *mask_values.shape[-3:])
+                        mask_values_3dmm = mask_values_3dmm.reshape(
+                            -1, *mask_values.shape[-3:])
 
                         attr_pixel_values = attr_pixel_values.cuda()
 
                         face_embeddings = face_embedder(
-                            F.interpolate(face_pixel_values, size=(112, 112), mode="bilinear"),
-                            torch.ones(face_pixel_values.size(0), device=face_pixel_values.device),
+                            F.interpolate(face_pixel_values, size=(
+                                112, 112), mode="bilinear"),
+                            torch.ones(face_pixel_values.size(
+                                0), device=face_pixel_values.device),
                             attr_pixel_values,
                             face_pixel_values,
                         )
                         seed = 12345
                         images = pipe(
                             [""] * num_frames,
-                            image = pixel_values,
-                            mask = mask_values,
-                            image_3dmm = pixel_values_3dmm,
-                            mask_3dmm = mask_values_3dmm,
-                            width = 512,
-                            height = 512,
-                            num_inference_steps = 40,
-                            strength = set_strength,
-                            num_images_per_prompt = 1,
-                            gligen_embeddings = face_embeddings,
-                            guidance_scale = 2.5,
-                            attr_scale = set_attr_scale,
-                            dino_scale = set_dino_scale,
+                            image=pixel_values,
+                            mask=mask_values,
+                            image_3dmm=pixel_values_3dmm,
+                            mask_3dmm=mask_values_3dmm,
+                            width=512,
+                            height=512,
+                            num_inference_steps=40,
+                            strength=set_strength,
+                            num_images_per_prompt=1,
+                            gligen_embeddings=face_embeddings,
+                            guidance_scale=2.5,
+                            attr_scale=set_attr_scale,
+                            dino_scale=set_dino_scale,
                             cross_attention_kwargs={"ip_scale": 0.9},
-                            negative_prompt = [""] * num_frames,
-                            ref_image = list(prev_frames),
+                            negative_prompt=[""] * num_frames,
+                            ref_image=list(prev_frames),
                             init_noise=init_noise if use_init_noise else None,
                             enable_3dmm_cfg=enable_3dmm_cfg,
                         ).images
@@ -782,9 +806,46 @@ if __name__ == "__main__":
                             frames.append(frame)
                         except:
                             break
-                    result_clip: VideoFileClip = ImageSequenceClip(frames, fps=25)
-                    result_clip.write_videofile(scales_video_saved_path, codec="libx264", audio=False)
-                    print('Save in : ',scales_video_saved_path)
+                    result_clip: VideoFileClip = ImageSequenceClip(
+                        frames, fps=25)
+                    result_clip.write_videofile(
+                        scales_video_saved_path, codec="libx264", audio=False)
+                    print('Save in : ', scales_video_saved_path)
                 except Exception as e:
                     print(e)
 
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Inference runner')
+    parser.add_argument('data_root', nargs='?',
+                        help='data root directory containing `videos/` and `faces/`')
+    parser.add_argument(
+        '-s', '--source', help='single source image path (overrides data_root)')
+    parser.add_argument(
+        '-t', '--target', help='single target video path (overrides data_root)')
+    parser.add_argument('--output', default=None,
+                        help='output directory to save results')
+    args = parser.parse_args()
+
+    # If both source and target are provided, use those as single-item lists
+    if args.source and args.target:
+        video_path_list = [os.path.join(args.data_root, 'videos', args.target)]
+        crop_face_path_list = [os.path.join(
+            args.data_root, 'faces', args.source)]
+    else:
+        # Use all video-face image pairs in the provided data_root directory
+        if not args.data_root:
+            parser.error(
+                'Either provide `data_root` positional or both `--source` and `--target`')
+        infer_data_root = args.data_root
+
+        video_dir = os.path.join(infer_data_root, 'videos')
+        faces_dir = os.path.join(infer_data_root, 'faces')
+
+        video_path_list = [os.path.join(video_dir, x) for x in os.listdir(
+            video_dir) if x.endswith('mp4')]
+        crop_face_path_list = [os.path.join(
+            faces_dir, x) for x in os.listdir(faces_dir)]
+    run(video_path_list, crop_face_path_list, output=args.output)
