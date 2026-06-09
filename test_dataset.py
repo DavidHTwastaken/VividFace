@@ -1,6 +1,7 @@
 import os
 import subprocess
 import pandas as pd
+from infer import run
 root = os.path.join('..','diverse-face-dataset')
 
 m = pd.read_csv(os.path.join(root,'map.csv'), header=0)
@@ -26,8 +27,11 @@ for img in images:
         subprocess.run(["python", "examples/faces/crop_image.py", os.path.join(root,img), "--output_path", os.path.join(imgs_dir,img), "--gpu", "0"])
 
 # run infer.py on each image with each video; save results in outputs/{image}_{video}
+cropped_videos = []
+cropped_images = []
 for img in images:
     for v in videos:
-        print(f"Running inference on image: {img} with video: {v}")
-        subprocess.run(["python", "infer.py", 'examples', "--source", os.path.join(img), "--target", os.path.join(v), "--output", f'{img.split(".")[0]}_{v.split(".")[0]}'])
-
+        cropped_images.append(os.path.join(imgs_dir,img))
+        cropped_videos.append(os.path.join(vids_dir,v))
+        # subprocess.run(["python", "infer.py", 'examples', "--source", os.path.join(img), "--target", os.path.join(v), "--output", f'{img.split(".")[0]}_{v.split(".")[0]}'])
+run(cropped_videos, cropped_images)

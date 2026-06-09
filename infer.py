@@ -562,7 +562,7 @@ def make_image_grid(images: List[Image.Image], rows: int, cols: int, resize: int
 
 
 
-def run(video_path_list, crop_face_path_list, output=None):
+def run(video_path_list, crop_face_path_list, output: str|None=None):
     device = "cuda"
     dtype = torch.float16
 
