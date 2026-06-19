@@ -3,3 +3,7 @@
 Deep3DFaceRecon/BFM/*
 outputs/*
 weights*/
+
+environment.yml
+
+tools

@@ -563,6 +563,8 @@ def make_image_grid(images: List[Image.Image], rows: int, cols: int, resize: int
 
 
 def run(video_path_list, crop_face_path_list, output: str|None=None):
+    if len(video_path_list) != len(crop_face_path_list):
+        raise ValueError("The number of video paths and crop face paths must be the same.")
     device = "cuda"
     dtype = torch.float16
 
@@ -659,8 +661,8 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
 
                     print(
                         f'Using DINO {set_dino_scale}, ATTR {set_attr_scale}, Video {short_video_path}, Face {short_face_path}')
-                    scales_video_saved_path = f'{video_saved_path}/{short_video_path}_{short_face_path}.mp4'
-                    frames_path = f'{frames_saved_root_path}/{short_video_path}_{short_face_path}'
+                    scales_video_saved_path = f'{video_saved_path}/{short_video_path}--{short_face_path}.mp4'
+                    frames_path = f'{frames_saved_root_path}/{short_video_path}--{short_face_path}'
                     os.mkdir(frames_path)
 
                     anno_path = video_path.replace(".mp4", ".txt")
