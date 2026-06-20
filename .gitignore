@@ -5,5 +5,3 @@ outputs/*
 weights*/
 
 environment.yml
-
-tools
