@@ -19,8 +19,8 @@ img_data_dir = os.path.join(root, 'sources')
 images = list(os.path.join(img_data_dir, i) for i in os.listdir(img_data_dir) if i.lower().endswith('jpg'))
 
 cropper = Crop()
-video_paths = [os.path.join(vids_dir, v) for v in videos]
-cropper.crop_videos(video_paths, vids_dir)
+# video_paths = [os.path.join(vids_dir, v) for v in videos]
+cropper.crop_videos(videos, vids_dir)
 # for v in videos:
 #     if not os.path.exists(os.path.join(vids_dir,v)):
 #         print(f"Processing video: {v}")
@@ -29,8 +29,8 @@ cropper.crop_videos(video_paths, vids_dir)
 #     if not os.path.exists(landmarks_path):
 #         print(f"Extracting landmarks for video: {v}")
 #         subprocess.run(["python", "examples/videos/extract_face_landmarks.py", "--video", os.path.join(root,v), "--output", landmarks_path, "--gpu", "0"])
-image_paths = [os.path.join(imgs_dir, img) for img in images]
-cropper.crop_source_images(image_paths, imgs_dir)
+# image_paths = [os.path.join(imgs_dir, img) for img in images]
+cropper.crop_source_images(images, imgs_dir)
 # for img in images:
 #     if not os.path.exists(os.path.join(imgs_dir,img)):
 #         print(f"Processing image: {img}")
@@ -40,7 +40,9 @@ cropper.crop_source_images(image_paths, imgs_dir)
 cropped_videos = []
 cropped_images = []
 for img in images:
+    img = os.path.basename(img)
     for v in videos:
+        v = os.path.basename(v)
         cropped_images.append(os.path.join(imgs_dir,img))
         cropped_videos.append(os.path.join(vids_dir,v))
         # subprocess.run(["python", "infer.py", 'examples', "--source", os.path.join(img), "--target", os.path.join(v), "--output", f'{img.split(".")[0]}_{v.split(".")[0]}'])
