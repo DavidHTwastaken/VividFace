@@ -634,11 +634,11 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
 
     path_id = unet_path.split('/')[-2]
     this_path_save_path = f'{save_file}_{path_id}' if output is None else save_file
-    os.mkdir(this_path_save_path)
+    os.makedirs(this_path_save_path, exist_ok=True)
     frames_saved_root_path = f'{this_path_save_path}/frames'
-    os.mkdir(frames_saved_root_path)
+    os.makedirs(frames_saved_root_path, exist_ok=True)
     video_saved_path = f'{this_path_save_path}/videos'
-    os.mkdir(video_saved_path)
+    os.makedirs(video_saved_path, exist_ok=True)
 
     num_frames = 8
     os.environ['new_pred_frames'] = str(num_frames)
@@ -667,7 +667,7 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
                         # skip pair if resulting video is already at save path
                         continue
 
-                    os.mkdir(frames_path)
+                    os.makedirs(frames_path, exist_ok=True)
 
                     anno_path = video_path.replace(".mp4", ".txt")
                     anno = np.array(process_file(anno_path))
