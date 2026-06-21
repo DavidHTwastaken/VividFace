@@ -633,7 +633,7 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
     ])
 
     path_id = unet_path.split('/')[-2]
-    this_path_save_path = f'{save_file}_{path_id}'
+    this_path_save_path = f'{save_file}_{path_id}' if output is None else save_file
     os.mkdir(this_path_save_path)
     frames_saved_root_path = f'{this_path_save_path}/frames'
     os.mkdir(frames_saved_root_path)
@@ -663,6 +663,10 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
                         f'Using DINO {set_dino_scale}, ATTR {set_attr_scale}, Video {short_video_path}, Face {short_face_path}')
                     scales_video_saved_path = f'{video_saved_path}/{short_video_path}--{short_face_path}.mp4'
                     frames_path = f'{frames_saved_root_path}/{short_video_path}--{short_face_path}'
+                    if os.path.exists(scales_video_saved_path):
+                        # skip pair if resulting video is already at save path
+                        continue
+
                     os.mkdir(frames_path)
 
                     anno_path = video_path.replace(".mp4", ".txt")
