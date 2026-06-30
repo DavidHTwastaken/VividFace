@@ -25,9 +25,9 @@ imgs_dir = os.path.join('examples','faces')
 # videos = m['file'][m['is_video'] == 1]
 # images = m['file'][m['is_video'] == 0]
 vid_data_dir = os.path.join(root, 'targets')
-videos = list(os.path.join(vid_data_dir,v) for v in os.listdir(vid_data_dir) if v.endswith('.mp4'))
+videos = list(sorted(os.path.join(vid_data_dir,v) for v in os.listdir(vid_data_dir) if v.endswith('.mp4')))
 img_data_dir = os.path.join(root, 'sources')
-images = list(os.path.join(img_data_dir, i) for i in os.listdir(img_data_dir) if i.lower().endswith('jpg'))
+images = list(sorted(os.path.join(img_data_dir, i) for i in os.listdir(img_data_dir) if i.lower().endswith('jpg')))
 image_csv = pd.read_csv(os.path.join(img_data_dir, 'identities.csv'))
 
 cropper = Crop()
