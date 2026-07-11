@@ -674,6 +674,7 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
                     video_reader = VideoReader(video_path)
                     video_length = len(video_reader) - (len(video_reader) % 8)
                     video_length = min(video_length, 80)
+                    video_fps = video_reader.get_avg_fps() 
 
                     face_pixel_values = []
                     crop_face = Image.open(face_path)
@@ -813,7 +814,7 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
                         except:
                             break
                     result_clip: VideoFileClip = ImageSequenceClip(
-                        frames, fps=25)
+                        frames, fps=video_fps)
                     result_clip.write_videofile(
                         scales_video_saved_path, codec="libx264", audio=False)
                     print('Save in : ', scales_video_saved_path)
