@@ -562,7 +562,7 @@ def make_image_grid(images: List[Image.Image], rows: int, cols: int, resize: int
 
 
 
-def run(video_path_list, crop_face_path_list, output: str|None=None):
+def run(video_path_list, crop_face_path_list, output: str|None=None, replace=False):
     if len(video_path_list) != len(crop_face_path_list):
         raise ValueError("The number of video paths and crop face paths must be the same.")
     device = "cuda"
@@ -663,7 +663,7 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
                         f'Using DINO {set_dino_scale}, ATTR {set_attr_scale}, Video {short_video_path}, Face {short_face_path}')
                     scales_video_saved_path = f'{video_saved_path}/{short_video_path}--{short_face_path}.mp4'
                     frames_path = f'{frames_saved_root_path}/{short_video_path}--{short_face_path}'
-                    if os.path.exists(scales_video_saved_path):
+                    if os.path.exists(scales_video_saved_path) and not replace:
                         # skip pair if resulting video is already at save path
                         continue
 
@@ -672,8 +672,9 @@ def run(video_path_list, crop_face_path_list, output: str|None=None):
                     anno_path = video_path.replace(".mp4", ".txt")
                     anno = np.array(process_file(anno_path))
                     video_reader = VideoReader(video_path)
-                    video_length = len(video_reader) - (len(video_reader) % 8)
-                    video_length = min(video_length, 80)
+                    # video_length = len(video_reader) - (len(video_reader) % 8)
+                    # video_length = min(video_length, 80)
+                    video_length = len(video_reader)
                     video_fps = video_reader.get_avg_fps() 
 
                     face_pixel_values = []
