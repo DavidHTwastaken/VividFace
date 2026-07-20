@@ -27,6 +27,10 @@ from diffusers import UNet2DConditionModel as OriginalUNet2DConditionModel
 from diffusers import DDIMScheduler, AutoencoderKL
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
+# transformers 5.x removed CLIPTextModel.text_model; shim it as self-reference so
+# diffusers encode_prompt(clip_skip=...) can still reach .text_model.final_layer_norm
+if not hasattr(CLIPTextModel, 'text_model'):
+    CLIPTextModel.text_model = property(lambda self: self)
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 from decord import VideoReader
 

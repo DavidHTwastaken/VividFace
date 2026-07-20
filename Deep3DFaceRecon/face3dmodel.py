@@ -57,11 +57,11 @@ def align_img(img, lm, lm3D, mask=None, target_size=224., rescale_factor=102.):
 
     if mask is not None:
         img_new, lm_new, mask_new, left, up = resize_n_crop_img(img, lm, t, s, target_size=target_size, mask=mask)
-        trans_params = np.array([w0, h0, s, t[0][0], t[1][0], left, up])
+        trans_params = np.array([w0, h0, s, t[0], t[1], left, up])
         return trans_params, img_new, lm_new, mask_new
     else:
         img_new, lm_new, left, up = resize_n_crop_img(img, lm, t, s, target_size=target_size)
-        trans_params = np.array([w0, h0, s, t[0][0], t[1][0], left, up])
+        trans_params = np.array([w0, h0, s, t[0], t[1], left, up])
         return trans_params, img_new, lm_new
 
 def read_data(im_path, lm_path, lm3d_std, to_tensor=True):
