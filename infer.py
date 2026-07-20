@@ -562,7 +562,7 @@ def make_image_grid(images: List[Image.Image], rows: int, cols: int, resize: int
 
 
 
-def run(video_path_list, crop_face_path_list, output: str|None=None, replace=False):
+def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir='outputs', replace=False):
     if len(video_path_list) != len(crop_face_path_list):
         raise ValueError("The number of video paths and crop face paths must be the same.")
     device = "cuda"
@@ -579,7 +579,7 @@ def run(video_path_list, crop_face_path_list, output: str|None=None, replace=Fal
     face3dmodel = Face3DModel(face3d_opt, device='cuda:0')
 
     task_id = datetime.now().strftime("%Y_%m_%d_%H_%M")
-    save_file = f'outputs/{task_id if output is None else output}'
+    save_file = f'{output_dir}/{task_id if output is None else output}'
     vae_path = 'weights/face3dvae'
     set_strength = 0.8
     enable_3dmm_cfg = False

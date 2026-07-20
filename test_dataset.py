@@ -2,9 +2,12 @@ import os
 import subprocess
 import pandas as pd
 from infer import run
-from tools.vid_crop import Crop 
-root = os.path.join('..','diverse-face-dataset')
+from tools.vid_crop import Crop
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--root', type=str, default=os.path.join('..','diverse-face-dataset'), help='Root directory of the dataset')
+root = parser.parse_args().root
 
 def same_gender(vid_name: str, img_name: str, image_csv: pd.DataFrame):
     # vid is from RAVDESS, even actor number is female
@@ -60,4 +63,4 @@ for img in images:
         cropped_images.append(os.path.join(imgs_dir,img))
         cropped_videos.append(os.path.join(vids_dir,v))
         # subprocess.run(["python", "infer.py", 'examples', "--source", os.path.join(img), "--target", os.path.join(v), "--output", f'{img.split(".")[0]}_{v.split(".")[0]}'])
-run(cropped_videos, cropped_images, output='test_dataset')
+run(cropped_videos, cropped_images, output='test_dataset', output_dir='outputs')
