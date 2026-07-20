@@ -16,7 +16,7 @@ import os
 from skimage import transform as trans
 import torch
 import warnings
-warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning) 
+#warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning) 
 warnings.filterwarnings("ignore", category=FutureWarning) 
 
 
@@ -34,7 +34,7 @@ def POS(xp, x):
 
     b = np.reshape(xp.transpose(), [2*npts, 1])
 
-    k, _, _, _ = np.linalg.lstsq(A, b)
+    k, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
 
     R1 = k[0:3]
     R2 = k[4:7]
