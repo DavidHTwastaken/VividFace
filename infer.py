@@ -18,6 +18,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
 from torchvision.utils import make_grid, save_image
+
+# diffusers 0.30+ imports AutoencoderRAE which requires Dinov2WithRegistersConfig
+# (added in transformers 4.45.0); inject a placeholder if not present so the import
+# chain doesn't fail — AutoencoderRAE is never used by this pipeline
+import transformers as _transformers_pkg
+if not hasattr(_transformers_pkg, 'Dinov2WithRegistersConfig'):
+    class _Placeholder: pass
+    _transformers_pkg.Dinov2WithRegistersConfig = _Placeholder
+del _transformers_pkg
+
 from diffusers.utils.torch_utils import randn_tensor
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipeline, StableDiffusionPipelineOutput
 from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion import rescale_noise_cfg
