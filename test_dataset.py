@@ -4,10 +4,16 @@ import pandas as pd
 from infer import run
 from tools.vid_crop import Crop
 import argparse
+from tools import load_video, images2video
+import cv2
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--root', type=str, default=os.path.join('..','diverse-face-dataset'), help='Root directory of the dataset')
-root = parser.parse_args().root
+parser.add_argument('--root', type=str, default='.', help='Root directory')
+parser.add_argument('--output_dir', type=str, default='outputs', help='Output directory')
+args = parser.parse_args()
+root = args.root
+output_dir = args.output_dir
 
 def same_gender(vid_name: str, img_name: str, image_csv: pd.DataFrame):
     # vid is from RAVDESS, even actor number is female
@@ -19,10 +25,20 @@ def same_gender(vid_name: str, img_name: str, image_csv: pd.DataFrame):
     return vid_is_female == img_is_female
 
 
+def get_output_path(video_path, face_path, output_dir):
+    short_video_path = os.path.splitext(
+        os.path.basename(video_path))[0]
+    short_face_path = os.path.splitext(
+        os.path.basename(face_path))[0]
+    out_dir = os.path.join('outputs', output_dir)
+    video_saved_path = os.path.join(
+        out_dir, 'videos', f'{short_video_path}--{short_face_path}.mp4')
+    return video_saved_path
+
 # m = pd.read_csv(os.path.join(root,'map.csv'), header=0)
 # print(m)
-vids_dir = os.path.join('examples','videos')
-imgs_dir = os.path.join('examples','faces')
+vids_dir = os.path.join(root,'videos')
+imgs_dir = os.path.join(root,'faces')
 
 # preprocess each video and image
 # videos = m['file'][m['is_video'] == 1]
@@ -35,7 +51,7 @@ image_csv = pd.read_csv(os.path.join(img_data_dir, 'identities.csv'))
 
 cropper = Crop()
 # video_paths = [os.path.join(vids_dir, v) for v in videos]
-cropper.crop_videos(videos, vids_dir)
+cropper.crop_videos(videos, vids_dir, save_pasteback=True)
 # for v in videos:
 #     if not os.path.exists(os.path.join(vids_dir,v)):
 #         print(f"Processing video: {v}")
@@ -63,4 +79,4 @@ for img in images:
         cropped_images.append(os.path.join(imgs_dir,img))
         cropped_videos.append(os.path.join(vids_dir,v))
         # subprocess.run(["python", "infer.py", 'examples', "--source", os.path.join(img), "--target", os.path.join(v), "--output", f'{img.split(".")[0]}_{v.split(".")[0]}'])
-run(cropped_videos, cropped_images, output='test_dataset', output_dir='outputs')
+run(cropped_videos, cropped_images, output='test_dataset', output_dir=output_dir, keep_audio=True, pasteback=True, cropper=cropper)

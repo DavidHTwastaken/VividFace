@@ -1,3 +1,5 @@
+from tools import load_video, images2video
+from tools.vid_crop import Crop
 import nvdiffrast.torch as dr
 ctx = dr.RasterizeCudaContext(device='cuda')
 
@@ -7,6 +9,7 @@ from datetime import datetime
 import sys
 import time
 import os
+import subprocess
 import cv2
 import random
 
@@ -35,6 +38,7 @@ from model.referencenet import ReferenceAttentionControl
 from model.unet_motion_model import UNetMotionModel, MotionAdapter
 from face3dvae.models.svd_temporal_decoder import AutoencoderKLTemporalEncoderDecoder
 from face_encoder import FaceEmbedder
+
 
 sys.path.insert(0, './Deep3DFaceRecon')
 from options.test_options import TestOptions
@@ -561,10 +565,24 @@ def make_image_grid(images: List[Image.Image], rows: int, cols: int, resize: int
     return grid
 
 
+def pasteback_video(driving_video_path, vids_dir, output_vid_path, cropper):
+    vid_path = driving_video_path
+    output_frames = load_video(output_vid_path)
+    original_frames = load_video(vid_path)
+    masks, target_M_c2o_lst = cropper.read_files(driving_video_path, vids_dir)
+    pasteback_frames = cropper.pasteback(
+        original_frames, output_frames, masks, target_M_c2o_lst)
+    output_fps = cv2.VideoCapture(vid_path).get(cv2.CAP_PROP_FPS)
+    wfp = output_vid_path.replace('.mp4', '_pasteback.mp4')
+    images2video(pasteback_frames, wfp=wfp, fps=output_fps)
+    os.replace(wfp, output_vid_path)
 
-def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir='outputs', replace=False):
+
+def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir='outputs', replace=False, keep_audio=False, pasteback=False, cropper=None):
     if len(video_path_list) != len(crop_face_path_list):
         raise ValueError("The number of video paths and crop face paths must be the same.")
+    if pasteback and cropper is None:
+        raise ValueError("Cropper must be provided if pasteback is enabled.")
     device = "cuda"
     dtype = torch.float16
 
@@ -661,8 +679,8 @@ def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir=
 
                     print(
                         f'Using DINO {set_dino_scale}, ATTR {set_attr_scale}, Video {short_video_path}, Face {short_face_path}')
-                    scales_video_saved_path = f'{video_saved_path}/{short_video_path}--{short_face_path}.mp4'
-                    frames_path = f'{frames_saved_root_path}/{short_video_path}--{short_face_path}'
+                    scales_video_saved_path = os.path.join(video_saved_path, f'{short_video_path}--{short_face_path}.mp4')
+                    frames_path = os.path.join(frames_saved_root_path, f'{short_video_path}--{short_face_path}')
                     if os.path.exists(scales_video_saved_path) and not replace:
                         # skip pair if resulting video is already at save path
                         continue
@@ -818,6 +836,29 @@ def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir=
                         frames, fps=video_fps)
                     result_clip.write_videofile(
                         scales_video_saved_path, codec="libx264", audio=False)
+                    
+                    if pasteback:
+                        pasteback_video(video_path, os.path.dirname(video_path),
+                                       scales_video_saved_path, cropper)
+                    
+                    if keep_audio:
+                        wfp_with_audio = os.path.join(args.output_dir, f'{os.path.basename(scales_video_saved_path).split(".")[0]}_with_audio.mp4')
+
+                        cmd = [
+                            'ffmpeg',
+                            '-y',
+                            '-i', f'"{scales_video_saved_path}"',
+                            '-i', f'"{video_path}"',
+                            '-map', '0:v',
+                            '-map', '1:a',
+                            '-c:v', 'copy',
+                            '-shortest',
+                            f'"{wfp_with_audio}"'
+                        ]
+                        subprocess.run(
+                            cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                        os.replace(wfp_with_audio, scales_video_saved_path)
+                    
                     print('Save in : ', scales_video_saved_path)
                 except Exception as e:
                     print(e)
