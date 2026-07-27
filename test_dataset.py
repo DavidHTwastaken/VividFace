@@ -38,14 +38,18 @@ def get_output_path(video_path, face_path, output_dir):
 # m = pd.read_csv(os.path.join(root,'map.csv'), header=0)
 # print(m)
 vids_dir = os.path.join(root,'videos')
+os.makedirs(vids_dir, exist_ok=True)
 imgs_dir = os.path.join(root,'faces')
+os.makedirs(imgs_dir, exist_ok=True)
 
 # preprocess each video and image
 # videos = m['file'][m['is_video'] == 1]
 # images = m['file'][m['is_video'] == 0]
 vid_data_dir = os.path.join(root, 'targets')
+os.makedirs(vid_data_dir, exist_ok=True)
 videos = list(sorted(os.path.join(vid_data_dir,v) for v in os.listdir(vid_data_dir) if v.endswith('.mp4')))
 img_data_dir = os.path.join(root, 'sources')
+os.makedirs(img_data_dir, exist_ok=True)
 images = list(sorted(os.path.join(img_data_dir, i) for i in os.listdir(img_data_dir) if i.lower().endswith('jpg')))
 image_csv = pd.read_csv(os.path.join(img_data_dir, 'identities.csv'))
 
