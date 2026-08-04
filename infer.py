@@ -565,20 +565,19 @@ def make_image_grid(images: List[Image.Image], rows: int, cols: int, resize: int
     return grid
 
 
-def pasteback_video(driving_video_path, vids_dir, output_vid_path, cropper):
-    vid_path = driving_video_path
+def pasteback_video(original_video_path, driving_video_path, vids_dir, output_vid_path, cropper: Crop):
     output_frames = load_video(output_vid_path)
-    original_frames = load_video(vid_path)
+    original_frames = load_video(original_video_path)
     masks, target_M_c2o_lst = cropper.read_files(driving_video_path, vids_dir)
     pasteback_frames = cropper.pasteback(
         original_frames, output_frames, masks, target_M_c2o_lst)
-    output_fps = cv2.VideoCapture(vid_path).get(cv2.CAP_PROP_FPS)
+    output_fps = cv2.VideoCapture(original_video_path).get(cv2.CAP_PROP_FPS)
     wfp = output_vid_path.replace('.mp4', '_pasteback.mp4')
     images2video(pasteback_frames, wfp=wfp, fps=output_fps)
     os.replace(wfp, output_vid_path)
 
 
-def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir='outputs', replace=False, keep_audio=False, pasteback=False, cropper=None):
+def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir='outputs', replace=False, keep_audio=False, pasteback=False, cropper=None|Crop):
     if len(video_path_list) != len(crop_face_path_list):
         raise ValueError("The number of video paths and crop face paths must be the same.")
     if pasteback and cropper is None:
@@ -837,8 +836,9 @@ def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir=
                     result_clip.write_videofile(
                         scales_video_saved_path, codec="libx264", audio=False)
                     
-                    if pasteback:
-                        pasteback_video(video_path, os.path.dirname(video_path),
+                    ori_vid_path = os.path.splitext(video_path)[0] + "_original.mp4"
+                    if pasteback and cropper is not None:
+                        pasteback_video(ori_vid_path, video_path, os.path.dirname(video_path),
                                        scales_video_saved_path, cropper)
                     
                     if keep_audio:
@@ -848,7 +848,7 @@ def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir=
                             'ffmpeg',
                             '-y',
                             '-i', f'"{scales_video_saved_path}"',
-                            '-i', f'"{video_path}"',
+                            '-i', f'"{ori_vid_path}"',
                             '-map', '0:v',
                             '-map', '1:a',
                             '-c:v', 'copy',
