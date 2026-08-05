@@ -842,7 +842,7 @@ def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir=
                                        scales_video_saved_path, cropper)
                     
                     if keep_audio:
-                        wfp_with_audio = os.path.join(args.output_dir, f'{os.path.basename(scales_video_saved_path).split(".")[0]}_with_audio.mp4')
+                        wfp_with_audio = os.path.join(os.path.dirname(scales_video_saved_path), f'{os.path.basename(scales_video_saved_path).split(".")[0]}_with_audio.mp4')
 
                         cmd = [
                             'ffmpeg',
