@@ -847,16 +847,16 @@ def run(video_path_list, crop_face_path_list, output: str|None=None, output_dir=
                         cmd = [
                             'ffmpeg',
                             '-y',
-                            '-i', f'"{scales_video_saved_path}"',
-                            '-i', f'"{ori_vid_path}"',
+                            '-i', f'{scales_video_saved_path}',
+                            '-i', f'{ori_vid_path}',
                             '-map', '0:v',
                             '-map', '1:a',
                             '-c:v', 'copy',
                             '-shortest',
-                            f'"{wfp_with_audio}"'
+                            f'{wfp_with_audio}'
                         ]
                         subprocess.run(
-                            cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                            cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                         os.replace(wfp_with_audio, scales_video_saved_path)
                     
                     print('Save in : ', scales_video_saved_path)
